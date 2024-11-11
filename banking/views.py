@@ -4,7 +4,7 @@ from .serializers import AccountSerializer, TransactionSerializer, BusinessSeria
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from django.db import models #TASK 2 Technicakl fix errors -NameError: name 'models' is not defined
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()
