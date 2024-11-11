@@ -32,7 +32,7 @@ class AccountViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(accounts, many=True)
         return Response(serializer.data)
 
-    @action(detail=True)
+    @action(detail=True, methods=['get'], url_path='user_account')
     def user_account(self, request, pk=None):
         # Allows users to view their own account details
         account = self.get_object()
@@ -56,7 +56,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 
         return Response({'current_balance': balance})    
 #ENDTASK4    
-
+from django.db.models import Sum
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -70,11 +70,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(transactions, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='summary-spending/(?P<account_id>[^/.]+)')
+    @action(detail=False, methods=['get'], url_path='spending-summary/(?P<account_id>[^/.]+)')
     def spending_summary(self, request, account_id=None):
         # Summarize spending by category for a given account
         transactions = Transaction.objects.filter(from_account_id=account_id, transaction_type="payment")
-        spending_summary = transactions.values('to_account__business__category').annotate(total=models.Sum('amount'))
+        # Summarize spending by business category
+        spending_summary = Transaction.objects.filter(
+            from_account_id=account_id,  # Filter by the specific account if needed
+            transaction_type="payment"  # Filter by transaction type if needed
+        ).values('business__category').annotate(total=Sum('amount'))        
         return Response(spending_summary)
 #ENDTASK4    
 
