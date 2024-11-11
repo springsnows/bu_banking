@@ -95,3 +95,52 @@ class BankingAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.business.refresh_from_db()
         self.assertTrue(self.business.sanctioned)
+
+#TASK4 Add manager_list and user_account actions
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
+from .models import Account, Transaction, Business
+from django.contrib.auth.models import User
+from decimal import Decimal
+from rest_framework_simplejwt.tokens import RefreshToken
+class BankingAPIManagerTestCase(APITestCase):
+    def setUp(self):
+        # Create test user and token
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.manager = User.objects.create_user(username="manager", password="password", is_staff=True)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(RefreshToken.for_user(self.user).access_token))
+
+        # Create account and business
+        self.account = Account.objects.create(id="1", name="User Account", starting_balance=Decimal('1000.00'), round_up_enabled=True)
+        self.business = Business.objects.create(id="kfc", name="KFC", category="Food", sanctioned=False)
+        self.transaction = Transaction.objects.create(transaction_type="payment", amount=Decimal('50.00'), from_account=self.account, to_account=self.account)
+
+    def test_get_account_list_as_manager(self):
+        self.client.force_authenticate(user=self.manager)
+        url = reverse('account-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_user_account(self):
+        url = reverse('account-user_account', args=[self.account.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], self.account.name)
+
+    def test_transactions_for_account(self):
+        url = reverse('transaction-account_transactions', args=[self.account.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+
+    def test_spending_summary(self):
+        url = reverse('transaction-spending_summary', args=[self.account.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_current_balance(self):
+        url = reverse('account-current_balance', args=[self.account.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('current_balance', response.data)
