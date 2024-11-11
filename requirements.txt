@@ -1,0 +1,4 @@
+djangorestframework
+django-rest-authtoken
+djangorestframework-simplejwt
+drf-yasg

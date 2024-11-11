@@ -39,6 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'banking',
+    #TASK1 Add swagger
+    'rest_framework_swagger',
+    'drf_yasg',
+    #ENDTASK1
+    
 ]
 
 MIDDLEWARE = [
