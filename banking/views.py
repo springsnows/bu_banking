@@ -53,8 +53,41 @@ class AccountViewSet(viewsets.ModelViewSet):
                 balance -= txn.amount
             elif txn.transaction_type == "collect_roundup":
                 balance += txn.amount  # Assuming RoundUps are credited back as deposits
+            #TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+            elif txn.transaction_type == "roundup_reclaim":
+                balance -= txn.amount
+            #ENDTASK5
 
         return Response({'current_balance': balance})    
+    #TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+    @action(detail=True, methods=['post'], url_path='enable_roundup')
+    def enable_roundup(self, request, pk=None):
+        # Enable or disable the Round Up feature
+        account = self.get_object()
+        account.round_up_enabled = not account.round_up_enabled
+        account.save()
+        return Response({'round_up_enabled': account.round_up_enabled})
+
+    @action(detail=True, methods=['post'])
+    def reclaim_roundup(self, request, pk=None):
+        # Reclaim the Round Up pot
+        account = self.get_object()
+        reclaim_amount = account.round_up_pot
+        if reclaim_amount > 0:
+            # Create a new transaction of type "roundup_reclaim"
+            Transaction.objects.create(
+                transaction_type="roundup_reclaim",
+                amount=reclaim_amount,
+                from_account=account
+            )
+            account.round_up_pot = 0  # Reset the Round Up pot
+            account.save()
+            return Response({'message': 'Round Up reclaimed successfully', 'reclaim_amount': reclaim_amount})
+        return Response({'message': 'No funds in Round Up pot to reclaim'})
+    #ENDTASK5
+
+
+            
 #ENDTASK4    
 from django.db.models import Sum
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -81,6 +114,24 @@ class TransactionViewSet(viewsets.ModelViewSet):
         ).values('business__category').annotate(total=Sum('amount'))        
         return Response(spending_summary)
 #ENDTASK4    
+#TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+    @action(detail=False, methods=['get'], url_path='top-10-spenders')
+    def top_10_spenders(self, request):
+        # Get the top 10 spenders by amount
+        top_spenders = Transaction.objects.filter(transaction_type="payment") \
+            .values('to_account__name') \
+            .annotate(total_spent=Sum('amount')) \
+            .order_by('-total_spent')[:10]
+        return Response(top_spenders)
+
+    @action(detail=False, methods=['get'], url_path='sanctioned-business-report')
+    def sanctioned_business_report(self, request):
+        # Report all transactions related to sanctioned businesses
+        sanctioned_transactions = Transaction.objects.filter(to_account__business__sanctioned=True) \
+            .values('to_account__business__name') \
+            .annotate(total_spent=Sum('amount'))
+        return Response(sanctioned_transactions)
+#ENDTASK5
 
 class BusinessViewSet(viewsets.ModelViewSet):
     queryset = Business.objects.all()

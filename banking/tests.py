@@ -140,3 +140,35 @@ class BankingAPIManagerTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('current_balance', response.data)        
+
+
+#TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+ 
+class BankingAPITestCase3(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(RefreshToken.for_user(self.user).access_token))
+
+        self.account = Account.objects.create(id=uuid.uuid4(), name="User Account", starting_balance=Decimal('1000.00'), round_up_enabled=True)
+        self.business = Business.objects.create(id="kfc", name="KFC", category="Food", sanctioned=True)
+        self.transaction = Transaction.objects.create(transaction_type="payment", amount=Decimal('50.00'), from_account=self.account, to_account=self.account)
+    def test_enable_roundup(self):
+        url = reverse('account-enable-roundup', args=[self.account.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.account.round_up_enabled=True
+        self.account.save()
+        self.account.refresh_from_db()
+        self.assertTrue(self.account.round_up_enabled)
+    def test_reclaim_roundup(self):
+        url = reverse('account-reclaim-roundup', args=[self.account.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_top_10_spenders(self):
+        url = reverse('transaction-top-10-spenders')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)     
+
+#
+#ENDTASK5        

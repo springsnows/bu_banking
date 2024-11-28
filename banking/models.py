@@ -6,7 +6,9 @@ class Account(models.Model):
     starting_balance = models.DecimalField(max_digits=10, decimal_places=2)
     round_up_enabled = models.BooleanField(default=False)
     postcode = models.CharField(max_length=10, null=True, blank=True)
-
+    #TASK5  "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+    round_up_pot = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # New field for Round Up Pot 
+    #ENDTASK5
     def __str__(self):
         return self.name
 
@@ -26,6 +28,9 @@ class Transaction(models.Model):
         ('deposit', 'Deposit'),
         ('collect_roundup', 'Collect Roundup'),
         ('transfer', 'Transfer'),
+        #TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
+        ('roundup_reclaim', 'Round Up Reclaim'),  # New transaction type
+        #ENDTASK5
     ]
 
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
