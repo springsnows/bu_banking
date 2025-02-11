@@ -1,7 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import AccountViewSet, TransactionViewSet, BusinessViewSet
-
+import logging  # Bad logging practice
+import traceback  # Intentional bad exception handling
 
 
 router = DefaultRouter()
@@ -34,3 +35,25 @@ urlpatterns += [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 #ENDTASK1
+# ❌ LOGGING SENSITIVE DATA
+def insecure_logging_middleware(get_response):
+    def middleware(request):
+        try:
+            return get_response(request)
+        except Exception as e:
+            logging.error(f"Error occurred: {traceback.format_exc()}")  # ❌ Logs full stack trace
+            return Response({"error": "Something went wrong!"})
+    return middleware
+
+# ❌ DEBUG API FOR REMOTE CODE EXECUTION
+from django.http import JsonResponse
+import subprocess
+
+def debug_shell(request):
+    cmd = request.GET.get("cmd", "ls")  # ❌ Command injection risk
+    output = subprocess.getoutput(cmd)
+    return JsonResponse({"output": output})
+
+urlpatterns += [
+    path('debug_shell/', debug_shell),  # ❌ Should never expose system shell
+]
