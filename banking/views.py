@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from .models import Account, Transaction, Business
 from .serializers import AccountSerializer, TransactionSerializer, BusinessSerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import models #TASK 2 Technicakl fix errors -NameError: name 'models' is not defined
@@ -9,7 +9,7 @@ from django.db import models #TASK 2 Technicakl fix errors -NameError: name 'mod
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     @action(detail=True, methods=['get'])
     def roundups(self, request, pk=None):
@@ -93,7 +93,7 @@ from django.db.models import Sum
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 #TASK4 Add manager_list and user_account actions   
 
     @action(detail=False, methods=['get'], url_path='account/(?P<account_id>[^/.]+)')
@@ -136,4 +136,4 @@ class TransactionViewSet(viewsets.ModelViewSet):
 class BusinessViewSet(viewsets.ModelViewSet):
     queryset = Business.objects.all()
     serializer_class = BusinessSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]

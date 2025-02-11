@@ -1,9 +1,9 @@
 from django.db import models
 
 class Account(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True, editable=False,)
     name = models.CharField(max_length=100)
-    starting_balance = models.DecimalField(max_digits=10, decimal_places=2)
+    starting_balance = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
     round_up_enabled = models.BooleanField(default=False)
     postcode = models.CharField(max_length=10, null=True, blank=True)
     #TASK5  "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
