@@ -39,12 +39,12 @@ pipeline {
                 sh '. ${VENV}/bin/activate && python manage.py test'
             }
         }
-        stage('Collect Static Files') {
-            steps {
+        //stage('Collect Static Files') {
+        //    steps {
                 // Collect static files for production.
-                sh '. ${VENV}/bin/activate && python manage.py collectstatic --noinput'
-            }
-        }
+        //        sh '. ${VENV}/bin/activate && python manage.py collectstatic --noinput'
+        //    }
+        //}
     }
     
     post {
