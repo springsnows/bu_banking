@@ -2,33 +2,34 @@ pipeline {
     agent any
 
     environment {
-        // Name of the virtual environment directory.
-        VENV = "venv"
+        VENV = 'venv'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Check out the source code.
                 checkout scm
             }
         }
         stage('Setup Python Environment') {
             steps {
-                // Create a virtual environment and upgrade pip.
-                sh 'python -m venv ${VENV}'
+                // Create a virtual environment using python3.
+                sh 'python3 -m venv ${VENV}'
+                // Create a symlink so that "python" points to "python3" within the venv.
+                sh 'ln -sf $(which python3) ${VENV}/bin/python'
+                // Activate the virtual environment and upgrade pip.
                 sh '. ${VENV}/bin/activate && pip install --upgrade pip'
             }
         }
         stage('Install Dependencies') {
             steps {
-                // Install the dependencies listed in requirements.txt.
+                // Activate the virtual environment and install requirements.
                 sh '. ${VENV}/bin/activate && pip install -r requirements.txt'
             }
         }
         stage('Apply Migrations') {
             steps {
-                // Apply Django database migrations.
+                // Run Django migrations.
                 sh '. ${VENV}/bin/activate && python manage.py migrate'
             }
         }
@@ -40,7 +41,7 @@ pipeline {
         }
         stage('Collect Static Files') {
             steps {
-                // Collect static files (if applicable).
+                // Collect static files for production.
                 sh '. ${VENV}/bin/activate && python manage.py collectstatic --noinput'
             }
         }
@@ -48,11 +49,11 @@ pipeline {
     
     post {
         always {
-            // Optionally archive static files or test reports.
+            // Optionally archive any artifacts (like static files or test reports).
             archiveArtifacts artifacts: 'staticfiles/**', allowEmptyArchive: true
         }
         failure {
-            echo 'Build failed. Please check the logs for more details.'
+            echo 'Build failed. Please check the logs for details.'
         }
     }
 }
