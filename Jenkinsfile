@@ -16,7 +16,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 // Create a virtual environment and upgrade pip.
-                sh 'python3 -m venv ${VENV}'
+                sh 'python -m venv ${VENV}'
                 sh '. ${VENV}/bin/activate && pip install --upgrade pip'
             }
         }
