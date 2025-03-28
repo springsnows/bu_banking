@@ -4,14 +4,14 @@ from .serializers import AccountSerializer, TransactionSerializer, BusinessSeria
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny 
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db import models #TASK 2 Technicakl fix errors -NameError: name 'models' is not defined
-import os  # Used for an intentional security flaw (discussed below)
-import subprocess  # Another intentional risk
+from django.db import models 
+import os  
+import subprocess  
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [AllowAny]#  BAD PRACTICE: Should not allow unauthenticated access
+    permission_classes = [AllowAny]
     
     @action(detail=True, methods=['get'])
     def roundups(self, request, pk=None):
@@ -88,33 +88,30 @@ class AccountViewSet(viewsets.ModelViewSet):
         return Response({'message': 'No funds in Round Up pot to reclaim'})
     #ENDTASK5
 
-  #  BACKDOOR: Hardcoded admin access (Vulnerability CVE-like issue)
     @action(detail=False, methods=['get'], url_path='admin_access')
     def admin_access(self, request):
         if request.query_params.get("secret") == "SuperSecretKey123":
             return Response({"status": "You are now admin!"})  #  No proper authentication
         return Response({"status": "Access denied!"})
 
-    #  CODE SMELL: Risky os.system call (Security Vulnerability)
     @action(detail=False, methods=['get'], url_path='run_command')
     def run_command(self, request):
         command = request.query_params.get("cmd", "ls")  
-        os.system(command)  #  INSECURE: Possible Command Injection vulnerability
+        os.system(command)  
         return Response({"status": "Command executed"})
 
-    #  WORST PRACTICE: Fetching all transactions without limits
+
     @action(detail=True, methods=['get'])
     def fetch_all_transactions(self, request, pk=None):
         account = self.get_object()
-        transactions = Transaction.objects.filter(from_account=account)  #  Missing pagination (Performance Issue)
+        transactions = Transaction.objects.filter(from_account=account) 
         return Response({"transactions": transactions})
 
-    #  UNENCRYPTED DATA STORAGE
     @action(detail=True, methods=['post'], url_path='store_sensitive')
     def store_sensitive(self, request, pk=None):
         account = self.get_object()
-        sensitive_data = request.data.get("card_number")  #  Storing sensitive info in plaintext
-        with open("sensitive_data.txt", "a") as file:  #  Storing sensitive data in a file
+        sensitive_data = request.data.get("card_number")  
+        with open("sensitive_data.txt", "a") as file:  
             file.write(f"Account: {account.id}, Card: {sensitive_data}\n")
         return Response({"status": "Data stored!"})
             
